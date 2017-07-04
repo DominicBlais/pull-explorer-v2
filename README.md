@@ -1,5 +1,8 @@
 # Pull Explorer v2
 
+[![Coverage Status](https://coveralls.io/repos/github/DominicBlais/pull-explorer-v2/badge.svg?branch=master)](https://coveralls.io/github/DominicBlais/pull-explorer-v2?branch=master)
+
+
 ![alt text](https://github.com/DominicBlais/pull-explorer-v2/blob/master/logo.png "Pull Explorer Logo")
 
 
@@ -7,7 +10,7 @@ Pull Explorer is a very simple demonstration library that analyzes GitHub pull r
 
 ### Documentation
 
-* [API](https://github.com/DominicBlais/pull-explorer-v2/docs/index.html)
+* [API](https://dominicblais.github.io/pull-explorer-v2/index.html)
 
 
 ### Building
