@@ -75,11 +75,8 @@ class PullExplorer {
    * rounded down
    */
   getOldestCreationWeek(start = Date.now()) {
-    if (!this.hasOwnProperty('_oldestCreationWeek')) {
-      this._oldestCreationWeek = Math.max.apply(null,
-        this.pullRequests.map(x => Math.floor(x.getWeeksPastCreation(start))));
-    }
-    return this._oldestCreationWeek;
+    return Math.max.apply(null,
+      this.pullRequests.map(x => Math.floor(x.getWeeksPastCreation(start))));
   }
 
   /**
@@ -90,11 +87,8 @@ class PullExplorer {
    * rounded down
    */
   getNewestCreationWeek(start = Date.now()) {
-    if (!this.hasOwnProperty('_newestCreationWeek')) {
-      this._newestCreationWeek = Math.min.apply(null,
-        this.pullRequests.map(x => Math.floor(x.getWeeksPastCreation(start))));
-    }
-    return this._newestCreationWeek;
+    return Math.min.apply(null,
+      this.pullRequests.map(x => Math.floor(x.getWeeksPastCreation(start))));
   }
 
   /**

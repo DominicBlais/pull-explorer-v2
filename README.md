@@ -17,10 +17,6 @@ Pull Explorer is a very simple demonstration library that analyzes GitHub pull r
 To build Pull Explorer v2 from source, use `npm run build` after testing via `npm test` or `npm test:cover`.
 Both minified and uncompressed versions will be built and available in the `dist` directory. To build the API documentation, use `npm run docs`.
 
-### Istanbul Coverage
-
-There's a minor [issue](https://github.com/gotwarlost/istanbul/issues/544) with branch coverage in Istanbul for projects that use Babel where it misreports that there is less than 100% branch coverage.
-
 ### License
 
 This source code is licensed under the MIT license found in the [LICENSE.txt](https://github.com/DominicBlais/pull-explorer-v2/blob/master/LICENSE.txt) file.

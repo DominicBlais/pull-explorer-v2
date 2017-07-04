@@ -63,8 +63,10 @@ describe('PullExplorer', () => {
 
   describe('pullExplorer.getOldestCreationWeek()', () => {
     it('should return the correct number of weeks since the oldest pull request was created', () => {
-      const pe = new PullExplorer(fakeData);
-      expect(pe.getOldestCreationWeek()).to.almost.equal(3, 4);
+      const pe1 = new PullExplorer(fakeData);
+      expect(pe1.getOldestCreationWeek()).to.almost.equal(3, 4);
+      const pe2 = new PullExplorer(fakeData);
+      expect(pe2.getOldestCreationWeek(oneWeekAgo)).to.almost.equal(2, 4);
     });
   });
 
@@ -74,6 +76,8 @@ describe('PullExplorer', () => {
       expect(pe1.getNewestCreationWeek()).to.almost.equal(1, 4);
       const pe2 = new PullExplorer([{ created_at: now.toISOString() }]);
       expect(pe2.getNewestCreationWeek()).to.almost.equal(0, 4);
+      const pe3 = new PullExplorer(fakeData);
+      expect(pe3.getNewestCreationWeek(oneWeekAgo)).to.almost.equal(0, 4);
     });
   });
 
@@ -82,11 +86,13 @@ describe('PullExplorer', () => {
       const pe = new PullExplorer(fakeData);
       expect(pe.getCreatedRequestsForPrevWeek(1)[0].createdAt.getTime())
         .to.be.equal(twelveDaysAgo.getTime());
+      expect(pe.getCreatedRequestsForPrevWeek().length).to.be.equal(0);
       expect(pe.getCreatedRequestsForPrevWeek(0).length).to.be.equal(0);
       expect(pe.getCreatedRequestsForPrevWeek(1).length).to.be.equal(6);
       expect(pe.getCreatedRequestsForPrevWeek(2).length).to.be.equal(2);
       expect(pe.getCreatedRequestsForPrevWeek(3).length).to.be.equal(2);
       expect(pe.getCreatedRequestsForPrevWeek(10).length).to.be.equal(0);
+      expect(pe.getCreatedRequestsForPrevWeek(0, oneWeekAgo).length).to.be.equal(6);
     });
   });
 
@@ -95,11 +101,13 @@ describe('PullExplorer', () => {
       const pe = new PullExplorer(fakeData);
       expect(pe.getMergedRequestsForPrevWeek(1)[0].mergedAt.getTime())
         .to.be.equal(oneWeekAgo.getTime());
+      expect(pe.getMergedRequestsForPrevWeek().length).to.be.equal(1);
       expect(pe.getMergedRequestsForPrevWeek(0).length).to.be.equal(1);
       expect(pe.getMergedRequestsForPrevWeek(1).length).to.be.equal(5);
       expect(pe.getMergedRequestsForPrevWeek(2).length).to.be.equal(1);
       expect(pe.getMergedRequestsForPrevWeek(3).length).to.be.equal(0);
       expect(pe.getMergedRequestsForPrevWeek(10).length).to.be.equal(0);
+      expect(pe.getMergedRequestsForPrevWeek(0, oneWeekAgo).length).to.be.equal(5);
     });
   });
 
@@ -107,12 +115,14 @@ describe('PullExplorer', () => {
     it('should return the correct arithmetic mean days from creation to merge '
         + 'for the merged requests of a given week', () => {
       const pe = new PullExplorer(fakeData);
+      expect(pe.getMeanCreationToMergeDaysForMergedPrevWeek()).to.almost.equal(10 - 0, 4);
       expect(pe.getMeanCreationToMergeDaysForMergedPrevWeek(0)).to.almost.equal(10 - 0, 4);
       expect(pe.getMeanCreationToMergeDaysForMergedPrevWeek(1)).to.almost
         .equal(((10 - 7) + (11 - 7) + (12 - 7) + (14 - 7) + (20 - 7)) / 5, 4);
       expect(pe.getMeanCreationToMergeDaysForMergedPrevWeek(2)).to.almost.equal(21 - 20, 4);
       expect(pe.getMeanCreationToMergeDaysForMergedPrevWeek(3)).to.be.equal(0);
       expect(pe.getMeanCreationToMergeDaysForMergedPrevWeek(10)).to.be.equal(0);
+      expect(pe.getMeanCreationToMergeDaysForMergedPrevWeek(1, oneWeekAgo)).to.almost.equal(21 - 20, 4);
     });
   });
 

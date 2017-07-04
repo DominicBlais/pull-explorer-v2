@@ -14,7 +14,7 @@ const _MS_IN_DAY = 86400000;
 const _MS_IN_WEEK = 604800000;
 
 /** @ignore */
-function _weeksSince(t, start = Date.now()) {
+function _weeksSince(t, start) {
   return (start - t) / _MS_IN_WEEK;
 }
 
@@ -96,8 +96,8 @@ class PullRequest {
    * @param {Date} start - the date at which to calculate from (now by default)
    * @return {boolean} true if this pull request was created before `other`
    */
-  isCreationBefore(other, start = Date.now()) {
-    return this.getWeeksPastCreation(start) > other.getWeeksPastCreation(start);
+  isCreationBefore(other) {
+    return this.createdAt < other.createdAt;
   }
 }
 
