@@ -122,7 +122,8 @@ describe('PullExplorer', () => {
       expect(pe.getMeanCreationToMergeDaysForMergedPrevWeek(2)).to.almost.equal(21 - 20, 4);
       expect(pe.getMeanCreationToMergeDaysForMergedPrevWeek(3)).to.be.equal(0);
       expect(pe.getMeanCreationToMergeDaysForMergedPrevWeek(10)).to.be.equal(0);
-      expect(pe.getMeanCreationToMergeDaysForMergedPrevWeek(1, oneWeekAgo)).to.almost.equal(21 - 20, 4);
+      expect(pe.getMeanCreationToMergeDaysForMergedPrevWeek(1, oneWeekAgo))
+        .to.almost.equal(21 - 20, 4);
     });
   });
 

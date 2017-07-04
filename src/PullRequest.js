@@ -93,7 +93,6 @@ class PullRequest {
   /**
    * Returns whether another pull request is after this one.
    * @param {PullRequest} other - another pull request
-   * @param {Date} start - the date at which to calculate from (now by default)
    * @return {boolean} true if this pull request was created before `other`
    */
   isCreationBefore(other) {

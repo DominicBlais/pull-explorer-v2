@@ -3,7 +3,7 @@
     "__docId__": 0,
     "kind": "file",
     "name": "src/PullExplorer.js",
-    "content": "/**\n * Pull Explorer v2 (https://github.com/DominicBlais/pull-explorer-v2)\n *\n * Copyright (c) 2017 Dominic Blais. All rights reserved.\n *\n * This source code is licensed under the MIT license found in the\n * LICENSE.txt file in the root directory of this source tree.\n * \n */\n\n\nimport PullRequest from './PullRequest';\n\n/**\n * PullExplorer allows the user to access and analyze GitHub pull request data.\n *  \n * @example \n *   \n *  let request = require('request');\n *  let pe = require('PullExplorer');\n * \n *  new Promise(function(resolve, reject) {\n *    request({\n *      url: 'https://api.github.com/repos/lodash/lodash/pulls?state=all&per_page=100',\n *      headers: { 'Accept': 'application/vnd.github.v3+json','User-Agent': 'request' }\n *    }, function(error, resp, body) {\n *      if (resp && resp.statusCode == 200) {\n *        resolve(JSON.parse(body));\n *      } else {\n *        reject(resp ? resp.statusCode : error);\n *      }\n *    })\n *  }).then(function(rawJsonData) {\n *    let pullExplorer = new pe.PullExplorer(rawJsonData);\n *    let firstWeek = pullExplorer.getOldestCreationWeek();\n *    for (let i = firstWeek; i >= 0; i--) {\n *      console.log(`Week ${i}: ${pullExplorer.getMeanCreationToMergeDaysForMergedPrevWeek(i).toFixed(2)}`);\n *    }\n *  }).catch(function(error) {\n *    console.log(error);\n *    // ...\n *  });\n *   \n */\nclass PullExplorer {\n  /**\n   * PullExplorer is a class for parsing and exploring GitHub pull requests.\n   * @param {Object[]} rawPullRequests - The raw JSON object array for a GitHub repository's pull requests\n   * as returned by https://api.github.org per the GitHub v3 API specification\n   * @see https://developer.github.com/v3/\n   */\n  constructor(rawPullRequests) {\n    /**\n     * An array of {@link PullRequest} objects created during PullExplorer initialization.\n     * @type {PullRequest[]}\n     */\n    this.pullRequests = rawPullRequests.map(x => new PullRequest(x));\n  }\n\n  /**\n   * Returns the total number of pull requests.\n   * @return {number} the number of pull requests\n   */\n  get pullRequestCount() {\n    return this.pullRequests.length;\n  }\n\n  /**\n   * Returns how many weeks ago is the oldest date of pull request creation.\n   * @param {Date} start - the date at which to calculate from (now by default)\n   * @return {number} the number of weeks since `start` the oldest pull request was created at as an integer\n   * rounded down\n   */\n  getOldestCreationWeek(start = Date.now()) {\n    if (! this.hasOwnProperty('_oldestCreationWeek')) {\n      this._oldestCreationWeek = Math.max.apply(null, this.pullRequests.map(x => Math.floor(x.getWeeksPastCreation(start))));\n    }\n    return this._oldestCreationWeek;\n  }\n\n  /**\n   * Returns how many weeks ago is the newest date of pull request creation.\n   * @param {Date} start - the date at which to calculate from (now by default)\n   * @return {number} the number of weeks since `start` the newest pull request was created at as an integer\n   * rounded down\n   */\n  getNewestCreationWeek(start = Date.now()) {\n    if (! this.hasOwnProperty('_newestCreationWeek')) {\n      this._newestCreationWeek = Math.min.apply(null, this.pullRequests.map(x => Math.floor(x.getWeeksPastCreation(start))));\n    }\n    return this._newestCreationWeek;\n  }\n\n  /**\n   * Returns an array of all {@link PullRequest} objects which were created on a given week\n   * @param {number} weeksAgo - which week to return PRs for, as an integer count of weeks from\n   * `start` rounded down\n   * @param {Date} start - the date at which to calculate from (now by default)\n   * @return {PullRequest[]} pull requests which were created during the given week\n   */\n  getCreatedRequestsForPrevWeek(weeksAgo = 0, start = Date.now()) {\n    return this.pullRequests.filter(x => Math.floor(x.getWeeksPastCreation(start)) == weeksAgo);\n  }\n\n  /**\n   * Returns an array of all {@link PullRequest} objects which were merged on a given week\n   * @param {number} weeksAgo - which week to return PRs for, as an integer count of weeks from\n   * `start` rounded down\n   * @param {Date} start - the date at which to calculate from (now by default)\n   * @return {PullRequest[]} pull requests which were merged during the given week\n   */\n  getMergedRequestsForPrevWeek(weeksAgo = 0, start = Date.now()) {\n    return this.pullRequests.filter(x => x.wasMerged && (Math.floor(x.getWeeksPastMerge(start)) == weeksAgo));\n  }\n\n  /**\n   * Returns the arithmetic mean of days from creation to merge for all pull requests which were\n   * merged on a given week.\n   * @param {number} weeksAgo - which week to analyze, as an integer count of weeks from\n   * `start` rounded down\n   * @param {Date} start - the date at which to calculate from (now by default)\n   * @return {PullRequest[]} pull requests which were merged during the given week\n   */\n  getMeanCreationToMergeDaysForMergedPrevWeek(weeksAgo = 0, start = Date.now()) {\n    let merged = this.getMergedRequestsForPrevWeek(weeksAgo, start);\n    if (merged.length == 0) {\n      return 0;\n    } else {\n      return merged.reduce((a,pr) => a + pr.creationToMergeDays, 0) / merged.length;\n    }\n  }\n}\n\nexport default PullExplorer;\n",
+    "content": "/**\n * Pull Explorer v2 (https://github.com/DominicBlais/pull-explorer-v2)\n *\n * Copyright (c) 2017 Dominic Blais. All rights reserved.\n *\n * This source code is licensed under the MIT license found in the\n * LICENSE.txt file in the root directory of this source tree.\n *\n */\n\n\nimport PullRequest from './PullRequest';\n\n/**\n * PullExplorer allows the user to access and analyze GitHub pull request data.\n *\n * @example\n *\n *  let request = require('request');\n *  let pe = require('PullExplorer');\n *\n *  new Promise(function(resolve, reject) {\n *    request({\n *      url: 'https://api.github.com/repos/lodash/lodash/pulls?state=all&per_page=100',\n *      headers: { 'Accept': 'application/vnd.github.v3+json','User-Agent': 'request' }\n *    }, function(error, resp, body) {\n *      if (resp && resp.statusCode == 200) {\n *        resolve(JSON.parse(body));\n *      } else {\n *        reject(resp ? resp.statusCode : error);\n *      }\n *    })\n *  }).then(function(rawJsonData) {\n *    let pullExplorer = new pe.PullExplorer(rawJsonData);\n *    let firstWeek = pullExplorer.getOldestCreationWeek();\n *    for (let i = firstWeek; i >= 0; i--) {\n *      console.log(`Week ${i}: ` +\n *        `${pullExplorer.getMeanCreationToMergeDaysForMergedPrevWeek(i).toFixed(2)}`);\n *    }\n *  }).catch(function(error) {\n *    console.log(error);\n *    // ...\n *  });\n *\n */\nclass PullExplorer {\n  /**\n   * PullExplorer is a class for parsing and exploring GitHub pull requests.\n   * @param {Object[]} rawPullRequests - The raw JSON object array for a GitHub\n   * repository's pull requests as returned by https://api.github.org per the GitHub v3\n   * API specification\n   * @see https://developer.github.com/v3/\n   */\n  constructor(rawPullRequests) {\n    /**\n     * An array of {@link PullRequest} objects created during PullExplorer initialization.\n     * @type {PullRequest[]}\n     */\n    this.pullRequests = rawPullRequests.map(x => new PullRequest(x));\n  }\n\n  /**\n   * Returns the total number of pull requests.\n   * @return {number} the number of pull requests\n   */\n  get pullRequestCount() {\n    return this.pullRequests.length;\n  }\n\n  /**\n   * Returns how many weeks ago is the oldest date of pull request creation.\n   * @param {Date} start - the date at which to calculate from (now by default)\n   * @return {number} the number of weeks since `start` the oldest pull request\n   * was created at as an integer\n   * rounded down\n   */\n  getOldestCreationWeek(start = Date.now()) {\n    return Math.max.apply(null,\n      this.pullRequests.map(x => Math.floor(x.getWeeksPastCreation(start))));\n  }\n\n  /**\n   * Returns how many weeks ago is the newest date of pull request creation.\n   * @param {Date} start - the date at which to calculate from (now by default)\n   * @return {number} the number of weeks since `start` the newest pull request was created at\n   * as an integer\n   * rounded down\n   */\n  getNewestCreationWeek(start = Date.now()) {\n    return Math.min.apply(null,\n      this.pullRequests.map(x => Math.floor(x.getWeeksPastCreation(start))));\n  }\n\n  /**\n   * Returns an array of all {@link PullRequest} objects which were created on a given week\n   * @param {number} weeksAgo - which week to return PRs for, as an integer count of weeks from\n   * `start` rounded down\n   * @param {Date} start - the date at which to calculate from (now by default)\n   * @return {PullRequest[]} pull requests which were created during the given week\n   */\n  getCreatedRequestsForPrevWeek(weeksAgo = 0, start = Date.now()) {\n    return this.pullRequests.filter(x => Math.floor(x.getWeeksPastCreation(start)) === weeksAgo);\n  }\n\n  /**\n   * Returns an array of all {@link PullRequest} objects which were merged on a given week\n   * @param {number} weeksAgo - which week to return PRs for, as an integer count of weeks from\n   * `start` rounded down\n   * @param {Date} start - the date at which to calculate from (now by default)\n   * @return {PullRequest[]} pull requests which were merged during the given week\n   */\n  getMergedRequestsForPrevWeek(weeksAgo = 0, start = Date.now()) {\n    return this.pullRequests.filter(x => x.wasMerged\n      && (Math.floor(x.getWeeksPastMerge(start)) === weeksAgo));\n  }\n\n  /**\n   * Returns the arithmetic mean of days from creation to merge for all pull requests which were\n   * merged on a given week.\n   * @param {number} weeksAgo - which week to analyze, as an integer count of weeks from\n   * `start` rounded down\n   * @param {Date} start - the date at which to calculate from (now by default)\n   * @return {PullRequest[]} pull requests which were merged during the given week\n   */\n  getMeanCreationToMergeDaysForMergedPrevWeek(weeksAgo = 0, start = Date.now()) {\n    const merged = this.getMergedRequestsForPrevWeek(weeksAgo, start);\n    if (merged.length === 0) {\n      return 0;\n    }\n    return merged.reduce((a, pr) => a + pr.creationToMergeDays, 0) / merged.length;\n  }\n}\n\nexport default PullExplorer;\n",
     "static": true,
     "longname": "src/PullExplorer.js",
     "access": null,
@@ -21,11 +21,11 @@
     "export": true,
     "importPath": "pull-explorer-v2/src/PullExplorer.js",
     "importStyle": "PullExplorer",
-    "description": "PullExplorer allows the user to access and analyze GitHub pull request data.\n ",
+    "description": "PullExplorer allows the user to access and analyze GitHub pull request data.",
     "examples": [
-      "  \n let request = require('request');\n let pe = require('PullExplorer');\n\n new Promise(function(resolve, reject) {\n   request({\n     url: 'https://api.github.com/repos/lodash/lodash/pulls?state=all&per_page=100',\n     headers: { 'Accept': 'application/vnd.github.v3+json','User-Agent': 'request' }\n   }, function(error, resp, body) {\n     if (resp && resp.statusCode == 200) {\n       resolve(JSON.parse(body));\n     } else {\n       reject(resp ? resp.statusCode : error);\n     }\n   })\n }).then(function(rawJsonData) {\n   let pullExplorer = new pe.PullExplorer(rawJsonData);\n   let firstWeek = pullExplorer.getOldestCreationWeek();\n   for (let i = firstWeek; i >= 0; i--) {\n     console.log(`Week ${i}: ${pullExplorer.getMeanCreationToMergeDaysForMergedPrevWeek(i).toFixed(2)}`);\n   }\n }).catch(function(error) {\n   console.log(error);\n   // ...\n });\n  "
+      "\n let request = require('request');\n let pe = require('PullExplorer');\n\n new Promise(function(resolve, reject) {\n   request({\n     url: 'https://api.github.com/repos/lodash/lodash/pulls?state=all&per_page=100',\n     headers: { 'Accept': 'application/vnd.github.v3+json','User-Agent': 'request' }\n   }, function(error, resp, body) {\n     if (resp && resp.statusCode == 200) {\n       resolve(JSON.parse(body));\n     } else {\n       reject(resp ? resp.statusCode : error);\n     }\n   })\n }).then(function(rawJsonData) {\n   let pullExplorer = new pe.PullExplorer(rawJsonData);\n   let firstWeek = pullExplorer.getOldestCreationWeek();\n   for (let i = firstWeek; i >= 0; i--) {\n     console.log(`Week ${i}: ` +\n       `${pullExplorer.getMeanCreationToMergeDaysForMergedPrevWeek(i).toFixed(2)}`);\n   }\n }).catch(function(error) {\n   console.log(error);\n   // ...\n });"
     ],
-    "lineNumber": 45,
+    "lineNumber": 46,
     "interface": false
   },
   {
@@ -42,7 +42,7 @@
     "see": [
       "https://developer.github.com/v3/"
     ],
-    "lineNumber": 52,
+    "lineNumber": 54,
     "params": [
       {
         "nullable": null,
@@ -52,7 +52,7 @@
         "spread": false,
         "optional": false,
         "name": "rawPullRequests",
-        "description": "The raw JSON object array for a GitHub repository's pull requests\nas returned by https://api.github.org per the GitHub v3 API specification"
+        "description": "The raw JSON object array for a GitHub\nrepository's pull requests as returned by https://api.github.org per the GitHub v3\nAPI specification"
       }
     ]
   },
@@ -65,7 +65,7 @@
     "longname": "src/PullExplorer.js~PullExplorer#pullRequests",
     "access": null,
     "description": "An array of {@link PullRequest} objects created during PullExplorer initialization.",
-    "lineNumber": 57,
+    "lineNumber": 59,
     "type": {
       "nullable": null,
       "types": [
@@ -86,7 +86,7 @@
     "longname": "src/PullExplorer.js~PullExplorer#pullRequestCount",
     "access": null,
     "description": "Returns the total number of pull requests.",
-    "lineNumber": 64,
+    "lineNumber": 66,
     "return": {
       "nullable": null,
       "types": [
@@ -112,7 +112,7 @@
     "longname": "src/PullExplorer.js~PullExplorer#getOldestCreationWeek",
     "access": null,
     "description": "Returns how many weeks ago is the oldest date of pull request creation.",
-    "lineNumber": 74,
+    "lineNumber": 77,
     "params": [
       {
         "nullable": null,
@@ -131,34 +131,11 @@
         "number"
       ],
       "spread": false,
-      "description": "the number of weeks since `start` the oldest pull request was created at as an integer\nrounded down"
+      "description": "the number of weeks since `start` the oldest pull request\nwas created at as an integer\nrounded down"
     }
   },
   {
     "__docId__": 6,
-    "kind": "member",
-    "name": "_oldestCreationWeek",
-    "memberof": "src/PullExplorer.js~PullExplorer",
-    "static": false,
-    "longname": "src/PullExplorer.js~PullExplorer#_oldestCreationWeek",
-    "access": null,
-    "description": null,
-    "lineNumber": 76,
-    "undocument": true,
-    "unknown": [
-      {
-        "tagName": "@_undocument",
-        "tagValue": ""
-      }
-    ],
-    "type": {
-      "types": [
-        "*"
-      ]
-    }
-  },
-  {
-    "__docId__": 7,
     "kind": "method",
     "name": "getNewestCreationWeek",
     "memberof": "src/PullExplorer.js~PullExplorer",
@@ -168,7 +145,7 @@
     "longname": "src/PullExplorer.js~PullExplorer#getNewestCreationWeek",
     "access": null,
     "description": "Returns how many weeks ago is the newest date of pull request creation.",
-    "lineNumber": 87,
+    "lineNumber": 89,
     "params": [
       {
         "nullable": null,
@@ -187,34 +164,11 @@
         "number"
       ],
       "spread": false,
-      "description": "the number of weeks since `start` the newest pull request was created at as an integer\nrounded down"
+      "description": "the number of weeks since `start` the newest pull request was created at\nas an integer\nrounded down"
     }
   },
   {
-    "__docId__": 8,
-    "kind": "member",
-    "name": "_newestCreationWeek",
-    "memberof": "src/PullExplorer.js~PullExplorer",
-    "static": false,
-    "longname": "src/PullExplorer.js~PullExplorer#_newestCreationWeek",
-    "access": null,
-    "description": null,
-    "lineNumber": 89,
-    "undocument": true,
-    "unknown": [
-      {
-        "tagName": "@_undocument",
-        "tagValue": ""
-      }
-    ],
-    "type": {
-      "types": [
-        "*"
-      ]
-    }
-  },
-  {
-    "__docId__": 9,
+    "__docId__": 7,
     "kind": "method",
     "name": "getCreatedRequestsForPrevWeek",
     "memberof": "src/PullExplorer.js~PullExplorer",
@@ -257,7 +211,7 @@
     }
   },
   {
-    "__docId__": 10,
+    "__docId__": 8,
     "kind": "method",
     "name": "getMergedRequestsForPrevWeek",
     "memberof": "src/PullExplorer.js~PullExplorer",
@@ -300,7 +254,7 @@
     }
   },
   {
-    "__docId__": 11,
+    "__docId__": 9,
     "kind": "method",
     "name": "getMeanCreationToMergeDaysForMergedPrevWeek",
     "memberof": "src/PullExplorer.js~PullExplorer",
@@ -310,7 +264,7 @@
     "longname": "src/PullExplorer.js~PullExplorer#getMeanCreationToMergeDaysForMergedPrevWeek",
     "access": null,
     "description": "Returns the arithmetic mean of days from creation to merge for all pull requests which were\nmerged on a given week.",
-    "lineNumber": 124,
+    "lineNumber": 125,
     "params": [
       {
         "nullable": null,
@@ -343,10 +297,10 @@
     }
   },
   {
-    "__docId__": 12,
+    "__docId__": 10,
     "kind": "file",
     "name": "src/PullRequest.js",
-    "content": "/**\n * Pull Explorer v2 (https://github.com/DominicBlais/pull-explorer-v2)\n *\n * Copyright (c) 2017 Dominic Blais. All rights reserved.\n *\n * This source code is licensed under the MIT license found in the\n * LICENSE.txt file in the root directory of this source tree.\n */\n\n/** @ignore */\nconst _MS_IN_DAY = 86400000;\n\n/** @ignore */\nconst _MS_IN_WEEK = 604800000;\n\n/** @ignore */\nconst _weeksSince = function(t, start = Date.now()) {\n  return (start - t) / _MS_IN_WEEK;\n};\n\n/**\n * PullRequest is a class representing each GitHub pull request and is generated by\n * {@link PullExplorer}. It contains properties and methods to access and analyze data associated\n * with the pull request, including a number of convenience methods for the time since a particular\n * pull request event has occurred.\n */\nclass PullRequest {\n  /**\n   * PullRequest is a class representing each GitHub pull request and is generate by\n   * {@link PullExplorer}.\n   * @param {Object} rawJsonData - The raw JSON object for a pull request returned by https://api.github.org\n   * per the GitHub v3 API specification\n   * @see https://developer.github.com/v3/\n   */\n  constructor(rawJsonData) {\n    /**\n     * the moment at which this pull request was created.\n     * @type {Date}\n     */\n    this.createdAt = new Date(rawJsonData.created_at);\n    /** \n     * whether this pull request has been merged.\n     * @type {boolean}\n     */\n    this.wasMerged = rawJsonData.merged_at != null;\n    if (this.wasMerged) {\n      /**\n       * mergedAt the moment at which this pull request was merged. This property is undefined\n       * if the pull request has not been merged.\n       * @type {Date} \n       */\n      this.mergedAt = new Date(rawJsonData.merged_at);\n    }\n    // todo: parse additional fields, e.g. request(rawJsonData.commits_url, (err,resp,body) => {this.commitedAt = Date.parse(JSON.parse(body)[0].commit.author.date)});\n  }\n\n  /**\n   * Returns the number of days from the time of the PR's creation to its merge, if a merge occurred.\n   * If a merge has not happened, an exception is thrown.\n   * @return {number} the days between mergedAt and createdAt.\n   * @throws {Error} if the pull request has not been merged\n   */\n  get creationToMergeDays() {\n    if (this.wasMerged) {\n      return Math.abs(this.mergedAt - this.createdAt) / _MS_IN_DAY;\n    } else {\n      throw new Error('Pull Request has not been merged');\n    }\n  }\n\n  /**\n   * Returns the number of weeks since this pull request was created\n   * @param {Date} start - the date at which to calculate from (now by default)\n   * @return {number} the number of weeks since `start` that this pull request was created\n   */\n  getWeeksPastCreation(start = Date.now()) {\n    return _weeksSince(this.createdAt, start);\n  }\n\n  /**\n   * Returns the number of weeks since this pull request was merged\n   * @param {Date} start - the date at which to calculate from (now by default)\n   * @return {number} the number of weeks since `start` that this pull request was merged\n   * @throw {Error} if the pull request has not been merged\n   */\n  getWeeksPastMerge(start = Date.now()) {\n    if (this.wasMerged) {\n      return _weeksSince(this.mergedAt, start);\n    } else {\n      throw new Error('Pull Request has not been merged');\n    }      \n  }\n\n  /**\n   * Returns whether another pull request is after this one.\n   * @param {PullRequest} other - another pull request\n   * @param {Date} start - the date at which to calculate from (now by default)\n   * @return {boolean} true if this pull request was created before `other`\n   */\n  isCreationBefore(other, start = Date.now()) {\n    return this.getWeeksPastCreation(start) > other.getWeeksPastCreation(start);\n  }\n}\n\nexport default PullRequest;\n",
+    "content": "/**\n * Pull Explorer v2 (https://github.com/DominicBlais/pull-explorer-v2)\n *\n * Copyright (c) 2017 Dominic Blais. All rights reserved.\n *\n * This source code is licensed under the MIT license found in the\n * LICENSE.txt file in the root directory of this source tree.\n */\n\n/** @ignore */\nconst _MS_IN_DAY = 86400000;\n\n/** @ignore */\nconst _MS_IN_WEEK = 604800000;\n\n/** @ignore */\nfunction _weeksSince(t, start) {\n  return (start - t) / _MS_IN_WEEK;\n}\n\n/**\n * PullRequest is a class representing each GitHub pull request and is generated by\n * {@link PullExplorer}. It contains properties and methods to access and analyze data associated\n * with the pull request, including a number of convenience methods for the time since a particular\n * pull request event has occurred.\n */\nclass PullRequest {\n  /**\n   * PullRequest is a class representing each GitHub pull request and is generate by\n   * {@link PullExplorer}.\n   * @param {Object} rawJsonData - The raw JSON object for a pull request returned by https://api.github.org\n   * per the GitHub v3 API specification\n   * @see https://developer.github.com/v3/\n   */\n  constructor(rawJsonData) {\n    /**\n     * the moment at which this pull request was created.\n     * @type {Date}\n     */\n    this.createdAt = new Date(rawJsonData.created_at);\n    /**\n     * whether this pull request has been merged.\n     * @type {boolean}\n     */\n    this.wasMerged = rawJsonData.merged_at != null;\n    if (this.wasMerged) {\n      /**\n       * mergedAt the moment at which this pull request was merged. This property is undefined\n       * if the pull request has not been merged.\n       * @type {Date}\n       */\n      this.mergedAt = new Date(rawJsonData.merged_at);\n    }\n    // todo: parse additional fields, e.g. request(rawJsonData.commits_url,\n    //  (err,resp,body) => {this.commitedAt = Date.parse(JSON.parse(body)[0].commit.author.date)})\n  }\n\n  /**\n   * Returns the number of days from the time of the PR's creation to its merge,\n   * if a merge occurred. If a merge has not happened, an exception is thrown.\n   * @return {number} the days between mergedAt and createdAt.\n   * @throws {Error} if the pull request has not been merged\n   */\n  get creationToMergeDays() {\n    if (this.wasMerged) {\n      return Math.abs(this.mergedAt - this.createdAt) / _MS_IN_DAY;\n    }\n    throw new Error('Pull Request has not been merged');\n  }\n\n  /**\n   * Returns the number of weeks since this pull request was created\n   * @param {Date} start - the date at which to calculate from (now by default)\n   * @return {number} the number of weeks since `start` that this pull request was created\n   */\n  getWeeksPastCreation(start = Date.now()) {\n    return _weeksSince(this.createdAt, start);\n  }\n\n  /**\n   * Returns the number of weeks since this pull request was merged\n   * @param {Date} start - the date at which to calculate from (now by default)\n   * @return {number} the number of weeks since `start` that this pull request was merged\n   * @throw {Error} if the pull request has not been merged\n   */\n  getWeeksPastMerge(start = Date.now()) {\n    if (this.wasMerged) {\n      return _weeksSince(this.mergedAt, start);\n    }\n    throw new Error('Pull Request has not been merged');\n  }\n\n  /**\n   * Returns whether another pull request is after this one.\n   * @param {PullRequest} other - another pull request\n   * @return {boolean} true if this pull request was created before `other`\n   */\n  isCreationBefore(other) {\n    return this.createdAt < other.createdAt;\n  }\n}\n\nexport default PullRequest;\n",
     "static": true,
     "longname": "src/PullRequest.js",
     "access": null,
@@ -354,7 +308,7 @@
     "lineNumber": 1
   },
   {
-    "__docId__": 13,
+    "__docId__": 11,
     "kind": "variable",
     "name": "_MS_IN_DAY",
     "memberof": "src/PullRequest.js",
@@ -374,7 +328,7 @@
     }
   },
   {
-    "__docId__": 14,
+    "__docId__": 12,
     "kind": "variable",
     "name": "_MS_IN_WEEK",
     "memberof": "src/PullRequest.js",
@@ -394,7 +348,7 @@
     }
   },
   {
-    "__docId__": 15,
+    "__docId__": 13,
     "kind": "function",
     "name": "_weeksSince",
     "memberof": "src/PullRequest.js",
@@ -418,7 +372,6 @@
       },
       {
         "name": "start",
-        "optional": true,
         "types": [
           "*"
         ]
@@ -431,7 +384,7 @@
     }
   },
   {
-    "__docId__": 16,
+    "__docId__": 14,
     "kind": "class",
     "name": "PullRequest",
     "memberof": "src/PullRequest.js",
@@ -446,7 +399,7 @@
     "interface": false
   },
   {
-    "__docId__": 17,
+    "__docId__": 15,
     "kind": "constructor",
     "name": "constructor",
     "memberof": "src/PullRequest.js~PullRequest",
@@ -474,7 +427,7 @@
     ]
   },
   {
-    "__docId__": 18,
+    "__docId__": 16,
     "kind": "member",
     "name": "createdAt",
     "memberof": "src/PullRequest.js~PullRequest",
@@ -493,7 +446,7 @@
     }
   },
   {
-    "__docId__": 19,
+    "__docId__": 17,
     "kind": "member",
     "name": "wasMerged",
     "memberof": "src/PullRequest.js~PullRequest",
@@ -512,7 +465,7 @@
     }
   },
   {
-    "__docId__": 20,
+    "__docId__": 18,
     "kind": "member",
     "name": "mergedAt",
     "memberof": "src/PullRequest.js~PullRequest",
@@ -531,7 +484,7 @@
     }
   },
   {
-    "__docId__": 21,
+    "__docId__": 19,
     "kind": "get",
     "name": "creationToMergeDays",
     "memberof": "src/PullRequest.js~PullRequest",
@@ -540,8 +493,8 @@
     "static": false,
     "longname": "src/PullRequest.js~PullRequest#creationToMergeDays",
     "access": null,
-    "description": "Returns the number of days from the time of the PR's creation to its merge, if a merge occurred.\nIf a merge has not happened, an exception is thrown.",
-    "lineNumber": 63,
+    "description": "Returns the number of days from the time of the PR's creation to its merge,\nif a merge occurred. If a merge has not happened, an exception is thrown.",
+    "lineNumber": 64,
     "return": {
       "nullable": null,
       "types": [
@@ -565,7 +518,7 @@
     ]
   },
   {
-    "__docId__": 22,
+    "__docId__": 20,
     "kind": "method",
     "name": "getWeeksPastCreation",
     "memberof": "src/PullRequest.js~PullRequest",
@@ -598,7 +551,7 @@
     }
   },
   {
-    "__docId__": 23,
+    "__docId__": 21,
     "kind": "method",
     "name": "getWeeksPastMerge",
     "memberof": "src/PullRequest.js~PullRequest",
@@ -637,7 +590,7 @@
     }
   },
   {
-    "__docId__": 24,
+    "__docId__": 22,
     "kind": "method",
     "name": "isCreationBefore",
     "memberof": "src/PullRequest.js~PullRequest",
@@ -647,7 +600,7 @@
     "longname": "src/PullRequest.js~PullRequest#isCreationBefore",
     "access": null,
     "description": "Returns whether another pull request is after this one.",
-    "lineNumber": 100,
+    "lineNumber": 98,
     "params": [
       {
         "nullable": null,
@@ -658,16 +611,6 @@
         "optional": false,
         "name": "other",
         "description": "another pull request"
-      },
-      {
-        "nullable": null,
-        "types": [
-          "Date"
-        ],
-        "spread": false,
-        "optional": false,
-        "name": "start",
-        "description": "the date at which to calculate from (now by default)"
       }
     ],
     "return": {
@@ -680,7 +623,7 @@
     }
   },
   {
-    "__docId__": 25,
+    "__docId__": 23,
     "kind": "file",
     "name": "src/index.js",
     "content": "/**\n * Pull Explorer v2 (https://github.com/DominicBlais/pull-explorer-v2)\n *\n * Copyright (c) 2017 Dominic Blais. All rights reserved.\n *\n * This source code is licensed under the MIT license found in the\n * LICENSE.txt file in the root directory of this source tree.\n */\n\nexport PullExplorer from './PullExplorer.js';\nexport PullRequest from './PullRequest.js';\n",
@@ -691,70 +634,7 @@
     "lineNumber": 1
   },
   {
-    "__docId__": 26,
-    "kind": "file",
-    "name": "src/simple.js",
-    "content": "let request = require('request');\nlet pe = require('../dist/index.js');\n\nnew Promise(function(resolve, reject) {\n  request({\n    url: 'https://api.github.com/repos/lodash/lodash/pulls?state=all&per_page=100',\n    headers: { 'Accept': 'application/vnd.github.v3+json','User-Agent': 'request' }\n  }, function(error, resp, body) {\n    if (resp && resp.statusCode == 200) {\n      resolve(JSON.parse(body));\n    } else {\n      reject(resp ? resp.statusCode : error);\n    }\n  })\n}).then(function(rawJsonData) {\n  let pullExplorer = new pe.PullExplorer(rawJsonData);\n  let firstWeek = pullExplorer.getOldestCreationWeek();\n  for (let i = firstWeek; i >= 0; i--) {\n    console.log(`Week ${i}: ${pullExplorer.getMeanCreationToMergeDaysForMergedPrevWeek(i).toFixed(2)}`);\n  }\n}).catch(function(error) {\n  console.log(error);\n  // ...\n});\n\n",
-    "static": true,
-    "longname": "src/simple.js",
-    "access": null,
-    "description": null,
-    "lineNumber": 1
-  },
-  {
-    "__docId__": 27,
-    "kind": "variable",
-    "name": "request",
-    "memberof": "src/simple.js",
-    "static": true,
-    "longname": "src/simple.js~request",
-    "access": null,
-    "export": false,
-    "importPath": "pull-explorer-v2/src/simple.js",
-    "importStyle": null,
-    "description": null,
-    "lineNumber": 1,
-    "undocument": true,
-    "unknown": [
-      {
-        "tagName": "@_undocument",
-        "tagValue": ""
-      }
-    ],
-    "type": {
-      "types": [
-        "*"
-      ]
-    }
-  },
-  {
-    "__docId__": 28,
-    "kind": "variable",
-    "name": "pe",
-    "memberof": "src/simple.js",
-    "static": true,
-    "longname": "src/simple.js~pe",
-    "access": null,
-    "export": false,
-    "importPath": "pull-explorer-v2/src/simple.js",
-    "importStyle": null,
-    "description": null,
-    "lineNumber": 2,
-    "undocument": true,
-    "unknown": [
-      {
-        "tagName": "@_undocument",
-        "tagValue": ""
-      }
-    ],
-    "type": {
-      "types": [
-        "*"
-      ]
-    }
-  },
-  {
-    "__docId__": 30,
+    "__docId__": 25,
     "kind": "external",
     "name": "Infinity",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Infinity",
@@ -766,7 +646,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 31,
+    "__docId__": 26,
     "kind": "external",
     "name": "NaN",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/NaN",
@@ -778,7 +658,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 32,
+    "__docId__": 27,
     "kind": "external",
     "name": "undefined",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/undefined",
@@ -790,7 +670,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 33,
+    "__docId__": 28,
     "kind": "external",
     "name": "null",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/null",
@@ -802,7 +682,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 34,
+    "__docId__": 29,
     "kind": "external",
     "name": "Object",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object",
@@ -814,7 +694,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 35,
+    "__docId__": 30,
     "kind": "external",
     "name": "object",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object",
@@ -826,7 +706,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 36,
+    "__docId__": 31,
     "kind": "external",
     "name": "Function",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function",
@@ -838,7 +718,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 37,
+    "__docId__": 32,
     "kind": "external",
     "name": "function",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function",
@@ -850,7 +730,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 38,
+    "__docId__": 33,
     "kind": "external",
     "name": "Boolean",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Boolean",
@@ -862,7 +742,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 39,
+    "__docId__": 34,
     "kind": "external",
     "name": "boolean",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Boolean",
@@ -874,7 +754,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 40,
+    "__docId__": 35,
     "kind": "external",
     "name": "Symbol",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol",
@@ -886,7 +766,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 41,
+    "__docId__": 36,
     "kind": "external",
     "name": "Error",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error",
@@ -898,7 +778,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 42,
+    "__docId__": 37,
     "kind": "external",
     "name": "EvalError",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/EvalError",
@@ -910,7 +790,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 43,
+    "__docId__": 38,
     "kind": "external",
     "name": "InternalError",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/InternalError",
@@ -922,7 +802,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 44,
+    "__docId__": 39,
     "kind": "external",
     "name": "RangeError",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError",
@@ -934,7 +814,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 45,
+    "__docId__": 40,
     "kind": "external",
     "name": "ReferenceError",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ReferenceError",
@@ -946,7 +826,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 46,
+    "__docId__": 41,
     "kind": "external",
     "name": "SyntaxError",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SyntaxError",
@@ -958,7 +838,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 47,
+    "__docId__": 42,
     "kind": "external",
     "name": "TypeError",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypeError",
@@ -970,7 +850,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 48,
+    "__docId__": 43,
     "kind": "external",
     "name": "URIError",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/URIError",
@@ -982,7 +862,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 49,
+    "__docId__": 44,
     "kind": "external",
     "name": "Number",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number",
@@ -994,7 +874,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 50,
+    "__docId__": 45,
     "kind": "external",
     "name": "number",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number",
@@ -1006,7 +886,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 51,
+    "__docId__": 46,
     "kind": "external",
     "name": "Date",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date",
@@ -1018,7 +898,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 52,
+    "__docId__": 47,
     "kind": "external",
     "name": "String",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String",
@@ -1030,7 +910,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 53,
+    "__docId__": 48,
     "kind": "external",
     "name": "string",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String",
@@ -1042,7 +922,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 54,
+    "__docId__": 49,
     "kind": "external",
     "name": "RegExp",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp",
@@ -1054,7 +934,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 55,
+    "__docId__": 50,
     "kind": "external",
     "name": "Array",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array",
@@ -1066,7 +946,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 56,
+    "__docId__": 51,
     "kind": "external",
     "name": "Int8Array",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Int8Array",
@@ -1078,7 +958,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 57,
+    "__docId__": 52,
     "kind": "external",
     "name": "Uint8Array",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array",
@@ -1090,7 +970,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 58,
+    "__docId__": 53,
     "kind": "external",
     "name": "Uint8ClampedArray",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8ClampedArray",
@@ -1102,7 +982,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 59,
+    "__docId__": 54,
     "kind": "external",
     "name": "Int16Array",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Int16Array",
@@ -1114,7 +994,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 60,
+    "__docId__": 55,
     "kind": "external",
     "name": "Uint16Array",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint16Array",
@@ -1126,7 +1006,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 61,
+    "__docId__": 56,
     "kind": "external",
     "name": "Int32Array",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Int32Array",
@@ -1138,7 +1018,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 62,
+    "__docId__": 57,
     "kind": "external",
     "name": "Uint32Array",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint32Array",
@@ -1150,7 +1030,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 63,
+    "__docId__": 58,
     "kind": "external",
     "name": "Float32Array",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Float32Array",
@@ -1162,7 +1042,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 64,
+    "__docId__": 59,
     "kind": "external",
     "name": "Float64Array",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Float64Array",
@@ -1174,7 +1054,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 65,
+    "__docId__": 60,
     "kind": "external",
     "name": "Map",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map",
@@ -1186,7 +1066,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 66,
+    "__docId__": 61,
     "kind": "external",
     "name": "Set",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set",
@@ -1198,7 +1078,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 67,
+    "__docId__": 62,
     "kind": "external",
     "name": "WeakMap",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WeakMap",
@@ -1210,7 +1090,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 68,
+    "__docId__": 63,
     "kind": "external",
     "name": "WeakSet",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WeakSet",
@@ -1222,7 +1102,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 69,
+    "__docId__": 64,
     "kind": "external",
     "name": "ArrayBuffer",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer",
@@ -1234,7 +1114,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 70,
+    "__docId__": 65,
     "kind": "external",
     "name": "DataView",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/DataView",
@@ -1246,7 +1126,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 71,
+    "__docId__": 66,
     "kind": "external",
     "name": "JSON",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON",
@@ -1258,7 +1138,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 72,
+    "__docId__": 67,
     "kind": "external",
     "name": "Promise",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise",
@@ -1270,7 +1150,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 73,
+    "__docId__": 68,
     "kind": "external",
     "name": "Generator",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Generator",
@@ -1282,7 +1162,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 74,
+    "__docId__": 69,
     "kind": "external",
     "name": "GeneratorFunction",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/GeneratorFunction",
@@ -1294,7 +1174,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 75,
+    "__docId__": 70,
     "kind": "external",
     "name": "Reflect",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Reflect",
@@ -1306,7 +1186,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 76,
+    "__docId__": 71,
     "kind": "external",
     "name": "Proxy",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy",
@@ -1319,7 +1199,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 78,
+    "__docId__": 73,
     "kind": "external",
     "name": "CanvasRenderingContext2D",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D",
@@ -1331,7 +1211,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 79,
+    "__docId__": 74,
     "kind": "external",
     "name": "DocumentFragment",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/API/DocumentFragment",
@@ -1343,7 +1223,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 80,
+    "__docId__": 75,
     "kind": "external",
     "name": "Element",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/API/Element",
@@ -1355,7 +1235,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 81,
+    "__docId__": 76,
     "kind": "external",
     "name": "Event",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/API/Event",
@@ -1367,7 +1247,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 82,
+    "__docId__": 77,
     "kind": "external",
     "name": "Node",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/API/Node",
@@ -1379,7 +1259,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 83,
+    "__docId__": 78,
     "kind": "external",
     "name": "NodeList",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/API/NodeList",
@@ -1391,7 +1271,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 84,
+    "__docId__": 79,
     "kind": "external",
     "name": "XMLHttpRequest",
     "externalLink": "https://developer.mozilla.org/en/docs/Web/API/XMLHttpRequest",
@@ -1403,7 +1283,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 85,
+    "__docId__": 80,
     "kind": "external",
     "name": "AudioContext",
     "externalLink": "https://developer.mozilla.org/en/docs/Web/API/AudioContext",

@@ -39,13 +39,13 @@
 </nav>
 
 <div class="content" data-ice="content"><div class="header-notice">
-  <div data-ice="importPath" class="import-path"><pre class="prettyprint"><code data-ice="importPathCode">import PullExplorer from &apos;<span><a href="file/src/PullExplorer.js.html#lineNumber45">pull-explorer-v2/src/PullExplorer.js</a></span>&apos;</code></pre></div>
+  <div data-ice="importPath" class="import-path"><pre class="prettyprint"><code data-ice="importPathCode">import PullExplorer from &apos;<span><a href="file/src/PullExplorer.js.html#lineNumber46">pull-explorer-v2/src/PullExplorer.js</a></span>&apos;</code></pre></div>
   <span data-ice="access">public</span>
   <span data-ice="kind">class</span>
   
   
   
-  <span data-ice="source">| <span><a href="file/src/PullExplorer.js.html#lineNumber45">source</a></span></span>
+  <span data-ice="source">| <span><a href="file/src/PullExplorer.js.html#lineNumber46">source</a></span></span>
 </div>
 
 <div class="self-detail detail">
@@ -76,7 +76,7 @@
     
   <div class="example-doc" data-ice="exampleDoc">
       
-      <pre class="prettyprint source-code"><code data-ice="exampleCode">  
+      <pre class="prettyprint source-code"><code data-ice="exampleCode">
  let request = require(&apos;request&apos;);
  let pe = require(&apos;PullExplorer&apos;);
 
@@ -95,13 +95,13 @@
    let pullExplorer = new pe.PullExplorer(rawJsonData);
    let firstWeek = pullExplorer.getOldestCreationWeek();
    for (let i = firstWeek; i &gt;= 0; i--) {
-     console.log(`Week ${i}: ${pullExplorer.getMeanCreationToMergeDaysForMergedPrevWeek(i).toFixed(2)}`);
+     console.log(`Week ${i}: ` +
+       `${pullExplorer.getMeanCreationToMergeDaysForMergedPrevWeek(i).toFixed(2)}`);
    }
  }).catch(function(error) {
    console.log(error);
    // ...
- });
-  </code></pre>
+ });</code></pre>
     </div>
 </div>
 
@@ -377,7 +377,7 @@ merged on a given week.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/PullExplorer.js.html#lineNumber52">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/PullExplorer.js.html#lineNumber54">source</a></span></span>
     </span>
   </h3>
 
@@ -401,8 +401,9 @@ merged on a given week.</p>
       <td data-ice="name" data-depth="0">rawPullRequests</td>
       <td data-ice="type"><span><span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a></span><span>[]</span></span></td>
       <td data-ice="appendix"></td>
-      <td data-ice="description"><p>The raw JSON object array for a GitHub repository&apos;s pull requests
-as returned by <a href="https://api.github.org">https://api.github.org</a> per the GitHub v3 API specification</p>
+      <td data-ice="description"><p>The raw JSON object array for a GitHub
+repository&apos;s pull requests as returned by <a href="https://api.github.org">https://api.github.org</a> per the GitHub v3
+API specification</p>
 </td>
     </tr>
 </tbody>
@@ -442,7 +443,7 @@ as returned by <a href="https://api.github.org">https://api.github.org</a> per t
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/PullExplorer.js.html#lineNumber64">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/PullExplorer.js.html#lineNumber66">source</a></span></span>
     </span>
   </h3>
 
@@ -499,7 +500,7 @@ as returned by <a href="https://api.github.org">https://api.github.org</a> per t
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/PullExplorer.js.html#lineNumber57">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/PullExplorer.js.html#lineNumber59">source</a></span></span>
     </span>
   </h3>
 
@@ -628,7 +629,7 @@ as returned by <a href="https://api.github.org">https://api.github.org</a> per t
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/PullExplorer.js.html#lineNumber124">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/PullExplorer.js.html#lineNumber125">source</a></span></span>
     </span>
   </h3>
 
@@ -793,7 +794,7 @@ merged on a given week.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/PullExplorer.js.html#lineNumber87">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/PullExplorer.js.html#lineNumber89">source</a></span></span>
     </span>
   </h3>
 
@@ -831,7 +832,8 @@ merged on a given week.</p>
       <tbody>
         <tr>
           <td class="return-type" data-ice="returnType"><span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a></span></td>
-          <td class="return-desc" data-ice="returnDescription"><p>the number of weeks since <code>start</code> the newest pull request was created at as an integer
+          <td class="return-desc" data-ice="returnDescription"><p>the number of weeks since <code>start</code> the newest pull request was created at
+as an integer
 rounded down</p>
 </td>
         </tr>
@@ -868,7 +870,7 @@ rounded down</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/PullExplorer.js.html#lineNumber74">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/PullExplorer.js.html#lineNumber77">source</a></span></span>
     </span>
   </h3>
 
@@ -906,7 +908,8 @@ rounded down</p>
       <tbody>
         <tr>
           <td class="return-type" data-ice="returnType"><span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a></span></td>
-          <td class="return-desc" data-ice="returnDescription"><p>the number of weeks since <code>start</code> the oldest pull request was created at as an integer
+          <td class="return-desc" data-ice="returnDescription"><p>the number of weeks since <code>start</code> the oldest pull request
+was created at as an integer
 rounded down</p>
 </td>
         </tr>
