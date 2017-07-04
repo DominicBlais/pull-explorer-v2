@@ -21,8 +21,8 @@ let promise = Promise.resolve();
 // Clean up the output directory
 promise = promise.then(() => del(['dist/*']));
 
-let presets = pkg.babel.presets.map(x => (x === 'latest' ? ['latest', { es2015: { modules: false } }] : x));
-let minifiedPresets = presets.slice();
+const presets = pkg.babel.presets.map(x => (x === 'latest' ? ['latest', { es2015: { modules: false } }] : x));
+const minifiedPresets = presets.slice();
 minifiedPresets.push('babili');
 
 // Compile source code into a distributable format with Babel
@@ -34,7 +34,7 @@ minifiedPresets.push('babili');
       babelrc: false,
       exclude: 'node_modules/**',
       runtimeHelpers: true,
-      presets: presets,
+      presets,
     }))],
   }).then(bundle => bundle.write({
     dest: `dist/${format === 'cjs' ? 'index' : `index.${format}`}.js`,

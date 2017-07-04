@@ -5,7 +5,7 @@
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE.txt file in the root directory of this source tree.
- * 
+ *
  */
 
 
@@ -13,12 +13,12 @@ import PullRequest from './PullRequest';
 
 /**
  * PullExplorer allows the user to access and analyze GitHub pull request data.
- *  
- * @example 
- *   
+ *
+ * @example
+ *
  *  let request = require('request');
  *  let pe = require('PullExplorer');
- * 
+ *
  *  new Promise(function(resolve, reject) {
  *    request({
  *      url: 'https://api.github.com/repos/lodash/lodash/pulls?state=all&per_page=100',
@@ -34,19 +34,21 @@ import PullRequest from './PullRequest';
  *    let pullExplorer = new pe.PullExplorer(rawJsonData);
  *    let firstWeek = pullExplorer.getOldestCreationWeek();
  *    for (let i = firstWeek; i >= 0; i--) {
- *      console.log(`Week ${i}: ${pullExplorer.getMeanCreationToMergeDaysForMergedPrevWeek(i).toFixed(2)}`);
+ *      console.log(`Week ${i}: ` +
+ *        `${pullExplorer.getMeanCreationToMergeDaysForMergedPrevWeek(i).toFixed(2)}`);
  *    }
  *  }).catch(function(error) {
  *    console.log(error);
  *    // ...
  *  });
- *   
+ *
  */
 class PullExplorer {
   /**
    * PullExplorer is a class for parsing and exploring GitHub pull requests.
-   * @param {Object[]} rawPullRequests - The raw JSON object array for a GitHub repository's pull requests
-   * as returned by https://api.github.org per the GitHub v3 API specification
+   * @param {Object[]} rawPullRequests - The raw JSON object array for a GitHub
+   * repository's pull requests as returned by https://api.github.org per the GitHub v3
+   * API specification
    * @see https://developer.github.com/v3/
    */
   constructor(rawPullRequests) {
@@ -68,12 +70,14 @@ class PullExplorer {
   /**
    * Returns how many weeks ago is the oldest date of pull request creation.
    * @param {Date} start - the date at which to calculate from (now by default)
-   * @return {number} the number of weeks since `start` the oldest pull request was created at as an integer
+   * @return {number} the number of weeks since `start` the oldest pull request
+   * was created at as an integer
    * rounded down
    */
   getOldestCreationWeek(start = Date.now()) {
-    if (! this.hasOwnProperty('_oldestCreationWeek')) {
-      this._oldestCreationWeek = Math.max.apply(null, this.pullRequests.map(x => Math.floor(x.getWeeksPastCreation(start))));
+    if (!this.hasOwnProperty('_oldestCreationWeek')) {
+      this._oldestCreationWeek = Math.max.apply(null,
+        this.pullRequests.map(x => Math.floor(x.getWeeksPastCreation(start))));
     }
     return this._oldestCreationWeek;
   }
@@ -81,12 +85,14 @@ class PullExplorer {
   /**
    * Returns how many weeks ago is the newest date of pull request creation.
    * @param {Date} start - the date at which to calculate from (now by default)
-   * @return {number} the number of weeks since `start` the newest pull request was created at as an integer
+   * @return {number} the number of weeks since `start` the newest pull request was created at
+   * as an integer
    * rounded down
    */
   getNewestCreationWeek(start = Date.now()) {
-    if (! this.hasOwnProperty('_newestCreationWeek')) {
-      this._newestCreationWeek = Math.min.apply(null, this.pullRequests.map(x => Math.floor(x.getWeeksPastCreation(start))));
+    if (!this.hasOwnProperty('_newestCreationWeek')) {
+      this._newestCreationWeek = Math.min.apply(null,
+        this.pullRequests.map(x => Math.floor(x.getWeeksPastCreation(start))));
     }
     return this._newestCreationWeek;
   }
@@ -99,7 +105,7 @@ class PullExplorer {
    * @return {PullRequest[]} pull requests which were created during the given week
    */
   getCreatedRequestsForPrevWeek(weeksAgo = 0, start = Date.now()) {
-    return this.pullRequests.filter(x => Math.floor(x.getWeeksPastCreation(start)) == weeksAgo);
+    return this.pullRequests.filter(x => Math.floor(x.getWeeksPastCreation(start)) === weeksAgo);
   }
 
   /**
@@ -110,7 +116,8 @@ class PullExplorer {
    * @return {PullRequest[]} pull requests which were merged during the given week
    */
   getMergedRequestsForPrevWeek(weeksAgo = 0, start = Date.now()) {
-    return this.pullRequests.filter(x => x.wasMerged && (Math.floor(x.getWeeksPastMerge(start)) == weeksAgo));
+    return this.pullRequests.filter(x => x.wasMerged
+      && (Math.floor(x.getWeeksPastMerge(start)) === weeksAgo));
   }
 
   /**
@@ -122,12 +129,11 @@ class PullExplorer {
    * @return {PullRequest[]} pull requests which were merged during the given week
    */
   getMeanCreationToMergeDaysForMergedPrevWeek(weeksAgo = 0, start = Date.now()) {
-    let merged = this.getMergedRequestsForPrevWeek(weeksAgo, start);
-    if (merged.length == 0) {
+    const merged = this.getMergedRequestsForPrevWeek(weeksAgo, start);
+    if (merged.length === 0) {
       return 0;
-    } else {
-      return merged.reduce((a,pr) => a + pr.creationToMergeDays, 0) / merged.length;
     }
+    return merged.reduce((a, pr) => a + pr.creationToMergeDays, 0) / merged.length;
   }
 }
 
