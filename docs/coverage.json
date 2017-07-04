@@ -1,0 +1,17 @@
+{
+  "coverage": "100%",
+  "expectCount": 18,
+  "actualCount": 18,
+  "files": {
+    "src/PullExplorer.js": {
+      "expectCount": 9,
+      "actualCount": 9,
+      "undocumentLines": []
+    },
+    "src/PullRequest.js": {
+      "expectCount": 9,
+      "actualCount": 9,
+      "undocumentLines": []
+    }
+  }
+}

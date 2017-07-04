@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <base data-ice="baseUrl" href="../../">
+  <title data-ice="title">src/PullExplorer.js | API Document</title>
+  <link type="text/css" rel="stylesheet" href="css/style.css">
+  <link type="text/css" rel="stylesheet" href="css/prettify-tomorrow.css">
+  <script src="script/prettify/prettify.js"></script>
+  
+  
+  <script src="script/manual.js"></script>
+</head>
+<body class="layout-container" data-ice="rootContainer">
+
+<header>
+  <a href="./">Home</a>
+  
+  <a href="identifiers.html">Reference</a>
+  <a href="source.html">Source</a>
+  
+  <a data-ice="repoURL" href="https://github.com/DominicBlais/pull-explorer-v2" class="repo-url-github">Repository</a>
+  <div class="search-box">
+  <span>
+    <img src="./image/search.png">
+    <span class="search-input-edge"></span><input class="search-input"><span class="search-input-edge"></span>
+  </span>
+    <ul class="search-result"></ul>
+  </div>
+</header>
+
+<nav class="navigation" data-ice="nav"><div>
+  <ul>
+    
+  <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/PullExplorer.js~PullExplorer.html">PullExplorer</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/PullRequest.js~PullRequest.html">PullRequest</a></span></span></li>
+</ul>
+</div>
+</nav>
+
+<div class="content" data-ice="content"><h1 data-ice="title">src/PullExplorer.js</h1>
+<pre class="source-code line-number raw-source-code"><code class="prettyprint linenums" data-ice="content">/**
+ * Pull Explorer v2 (https://github.com/DominicBlais/pull-explorer-v2)
+ *
+ * Copyright (c) 2017 Dominic Blais. All rights reserved.
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE.txt file in the root directory of this source tree.
+ * 
+ */
+
+
+import PullRequest from &apos;./PullRequest&apos;;
+
+/**
+ * PullExplorer allows the user to access and analyze GitHub pull request data.
+ *  
+ * @example 
+ *   
+ *  let request = require(&apos;request&apos;);
+ *  let pe = require(&apos;PullExplorer&apos;);
+ * 
+ *  new Promise(function(resolve, reject) {
+ *    request({
+ *      url: &apos;https://api.github.com/repos/lodash/lodash/pulls?state=all&amp;per_page=100&apos;,
+ *      headers: { &apos;Accept&apos;: &apos;application/vnd.github.v3+json&apos;,&apos;User-Agent&apos;: &apos;request&apos; }
+ *    }, function(error, resp, body) {
+ *      if (resp &amp;&amp; resp.statusCode == 200) {
+ *        resolve(JSON.parse(body));
+ *      } else {
+ *        reject(resp ? resp.statusCode : error);
+ *      }
+ *    })
+ *  }).then(function(rawJsonData) {
+ *    let pullExplorer = new pe.PullExplorer(rawJsonData);
+ *    let firstWeek = pullExplorer.getOldestCreationWeek();
+ *    for (let i = firstWeek; i &gt;= 0; i--) {
+ *      console.log(`Week ${i}: ${pullExplorer.getMeanCreationToMergeDaysForMergedPrevWeek(i).toFixed(2)}`);
+ *    }
+ *  }).catch(function(error) {
+ *    console.log(error);
+ *    // ...
+ *  });
+ *   
+ */
+class PullExplorer {
+  /**
+   * PullExplorer is a class for parsing and exploring GitHub pull requests.
+   * @param {Object[]} rawPullRequests - The raw JSON object array for a GitHub repository&apos;s pull requests
+   * as returned by https://api.github.org per the GitHub v3 API specification
+   * @see https://developer.github.com/v3/
+   */
+  constructor(rawPullRequests) {
+    /**
+     * An array of {@link PullRequest} objects created during PullExplorer initialization.
+     * @type {PullRequest[]}
+     */
+    this.pullRequests = rawPullRequests.map(x =&gt; new PullRequest(x));
+  }
+
+  /**
+   * Returns the total number of pull requests.
+   * @return {number} the number of pull requests
+   */
+  get pullRequestCount() {
+    return this.pullRequests.length;
+  }
+
+  /**
+   * Returns how many weeks ago is the oldest date of pull request creation.
+   * @param {Date} start - the date at which to calculate from (now by default)
+   * @return {number} the number of weeks since `start` the oldest pull request was created at as an integer
+   * rounded down
+   */
+  getOldestCreationWeek(start = Date.now()) {
+    if (! this.hasOwnProperty(&apos;_oldestCreationWeek&apos;)) {
+      this._oldestCreationWeek = Math.max.apply(null, this.pullRequests.map(x =&gt; Math.floor(x.getWeeksPastCreation(start))));
+    }
+    return this._oldestCreationWeek;
+  }
+
+  /**
+   * Returns how many weeks ago is the newest date of pull request creation.
+   * @param {Date} start - the date at which to calculate from (now by default)
+   * @return {number} the number of weeks since `start` the newest pull request was created at as an integer
+   * rounded down
+   */
+  getNewestCreationWeek(start = Date.now()) {
+    if (! this.hasOwnProperty(&apos;_newestCreationWeek&apos;)) {
+      this._newestCreationWeek = Math.min.apply(null, this.pullRequests.map(x =&gt; Math.floor(x.getWeeksPastCreation(start))));
+    }
+    return this._newestCreationWeek;
+  }
+
+  /**
+   * Returns an array of all {@link PullRequest} objects which were created on a given week
+   * @param {number} weeksAgo - which week to return PRs for, as an integer count of weeks from
+   * `start` rounded down
+   * @param {Date} start - the date at which to calculate from (now by default)
+   * @return {PullRequest[]} pull requests which were created during the given week
+   */
+  getCreatedRequestsForPrevWeek(weeksAgo = 0, start = Date.now()) {
+    return this.pullRequests.filter(x =&gt; Math.floor(x.getWeeksPastCreation(start)) == weeksAgo);
+  }
+
+  /**
+   * Returns an array of all {@link PullRequest} objects which were merged on a given week
+   * @param {number} weeksAgo - which week to return PRs for, as an integer count of weeks from
+   * `start` rounded down
+   * @param {Date} start - the date at which to calculate from (now by default)
+   * @return {PullRequest[]} pull requests which were merged during the given week
+   */
+  getMergedRequestsForPrevWeek(weeksAgo = 0, start = Date.now()) {
+    return this.pullRequests.filter(x =&gt; x.wasMerged &amp;&amp; (Math.floor(x.getWeeksPastMerge(start)) == weeksAgo));
+  }
+
+  /**
+   * Returns the arithmetic mean of days from creation to merge for all pull requests which were
+   * merged on a given week.
+   * @param {number} weeksAgo - which week to analyze, as an integer count of weeks from
+   * `start` rounded down
+   * @param {Date} start - the date at which to calculate from (now by default)
+   * @return {PullRequest[]} pull requests which were merged during the given week
+   */
+  getMeanCreationToMergeDaysForMergedPrevWeek(weeksAgo = 0, start = Date.now()) {
+    let merged = this.getMergedRequestsForPrevWeek(weeksAgo, start);
+    if (merged.length == 0) {
+      return 0;
+    } else {
+      return merged.reduce((a,pr) =&gt; a + pr.creationToMergeDays, 0) / merged.length;
+    }
+  }
+}
+
+export default PullExplorer;
+</code></pre>
+
+</div>
+
+<footer class="footer">
+  Generated by <a href="https://esdoc.org">ESDoc<span data-ice="esdocVersion">(0.5.2)</span><img src="./image/esdoc-logo-mini-black.png"></a>
+</footer>
+
+<script src="script/search_index.js"></script>
+<script src="script/search.js"></script>
+<script src="script/pretty-print.js"></script>
+<script src="script/inherited-summary.js"></script>
+<script src="script/test-summary.js"></script>
+<script src="script/inner-link.js"></script>
+<script src="script/patch-for-local.js"></script>
+</body>
+</html>
